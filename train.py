@@ -168,10 +168,10 @@ mse = nn.MSELoss()
 PATH = "best_models/"
 for i in range(num_vectors):
     if (i < num_vectors - 2):
-        top_down_model_list[i].load_state_dict(torch.load(PATH+"top_down_model{}".format(i)))
+        top_down_model_list[i] = torch.load(PATH+"top_down_model{}".format(i))
     if (i < num_vectors - 1):
-        bottom_up_model_list[i].load_state_dict(torch.load(PATH+"bottom_up_model{}".format(i)))
-        layer_att_model_list[i].load_state_dict(torch.load(PATH+"layer_att_model{}".format(i)))
+        bottom_up_model_list[i] = torch.load(PATH+"bottom_up_model{}".format(i))
+        layer_att_model_list[i] = torch.load(PATH+"layer_att_model{}".format(i))
 
 tot_corr = 0
 tot_batches = 0
