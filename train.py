@@ -223,7 +223,7 @@ try:
         plt.savefig("train.png")
 
 except:
-    print(train_loss))
+    print(train_loss)
     fig = plt.figure(train_loss)
     plt.plot(xrange(len(train_loss)),train_loss, color='blue')
     plt.xlabel('number of training epochs')
