@@ -216,11 +216,7 @@ try:
         optimizer.step()
         train_loss.append(loss)
         print("Epoch: {}/{}  Loss: {}".format(epoch, epochs, loss))
-        fig = plt.figure(train_loss)
-        plt.plot(xrange(len(train_loss)), train_loss, color='blue')
-        plt.xlabel('number of training epochs')
-        plt.ylabel('loss')
-        plt.savefig("train.png")
+
 
 except:
     print(train_loss)
@@ -229,3 +225,10 @@ except:
     plt.xlabel('number of training epochs')
     plt.ylabel('loss')
     plt.savefig("train.png")
+
+print(train_loss)
+fig = plt.figure()
+plt.plot(range(len(train_loss)),train_loss, color='blue')
+plt.xlabel('number of training epochs')
+plt.ylabel('loss')
+plt.savefig("train.png")
