@@ -10,7 +10,7 @@ else:
     dev = "cpu"
 device = torch.device(dev)
 
-import matplotlib.pyplot as plt
+
 
 batch_size_train = 60
 batch_size_test = 60
@@ -165,35 +165,33 @@ for i in range(num_vectors):
 optimizer = torch.optim.Adam(param_list, lr=learning_rate)
 mse = nn.MSELoss()
 
-examples = enumerate(train_loader)
-batch_idx, (example_data, example_targets) = next(examples)
-train_loss = []
-for epoch in range(epochs):
-    optimizer.zero_grad()
+PATH = "best_models/"
+for i in range(num_vectors):
+    if (i < num_vectors - 2):
+        top_down_model_list[i] = torch.load(PATH+"top_down_model{}".format(i))
+    if (i < num_vectors - 1):
+        bottom_up_model_list[i] = torch.load(PATH+"bottom_up_model{}".format(i))
+        layer_att_model_list[i] = torch.load(PATH+"layer_att_model{}".format(i))
 
-    # in case StopIteration error is raised
-    try:
-        batch_idx, (example_data, example_targets) = next(examples)
-    except StopIteration:
-        examples = enumerate(train_loader)
-        batch_idx, (example_data, example_targets) = next(examples)
+tot_corr = 0
+tot_batches = 0
+for example_data, target in test_loader:
+    tot_batches += batch_size_test
 
     # initialize state
-    state = init_state(batch_size_train, img_height, img_width, num_vectors, len_vectors)
+    state = init_state(batch_size_test, img_height, img_width, num_vectors, len_vectors)
 
     # put current batches into state
-    state[:, :, :, 0, :] = data_to_state(example_data, batch_size_train)
+    state[:, :, :, 0, :] = data_to_state(example_data, batch_size_test)
     state1 = torch.clone(state)
     state2 = torch.clone(state)
     state3 = torch.clone(state)
     for step in range(steps):
-
         delta = compute_all(bottom_up_model_list, top_down_model_list, layer_att_model_list, state, len_vectors,
-                            num_vectors, batch_size_train)
+                            num_vectors, batch_size_test)
 
-        state = state + delta + .0001 * torch.rand((state.shape)).to(device)
-
-        # add first state to state in the middle of the steps (allows for RESNET type gradient backprop)
+        # update state
+        state = state + delta
         if (step % int(steps / 2) == 0):
             state = state + state1 * .1
             state1 = torch.clone(state)
@@ -207,18 +205,14 @@ for epoch in range(epochs):
             state3 = torch.clone(state)
 
     state = state + state1 * .1 + state2 * .1 + state3 * .1
-    # get loss
-    pred_out = state[:, :, :, -1]
-    targ_out = targets_to_state(example_targets, batch_size_train)
-    loss = mse(pred_out, targ_out)
-    loss.backward()
-    optimizer.step()
-    train_loss.append(loss)
-    print("Epoch: {}/{}  Loss: {}".format(epoch, epochs, loss))
+    for batch in range(batch_size_test):
+        temp = torch.zeros((10))
+        for height in range(img_height):
+            for width in range(img_width):
+                ind = torch.argmax(state[batch, height, width, -1])
+                temp[ind] += 1
 
-
-fig = plt.figure()
-plt.plot(xrange(len(train_loss)),train_loss, color='blue')
-plt.xlabel('number of training epochs')
-plt.ylabel('loss')
-plt.savefig("train.png")
+        if (target[batch] == torch.argmax(temp)):
+            tot_corr += 1
+    print("Acc: {}".format(tot_corr / tot_batches))
+print("Final Accuracy: {}".format(tot_corr / tot_batches))
