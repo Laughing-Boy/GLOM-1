@@ -224,7 +224,7 @@ try:
 
 except:
     print(train_loss)
-    fig = plt.figure(train_loss)
+    fig = plt.figure()
     plt.plot(xrange(len(train_loss)),train_loss, color='blue')
     plt.xlabel('number of training epochs')
     plt.ylabel('loss')
