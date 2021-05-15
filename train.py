@@ -168,57 +168,59 @@ mse = nn.MSELoss()
 examples = enumerate(train_loader)
 batch_idx, (example_data, example_targets) = next(examples)
 train_loss = []
-for epoch in range(epochs):
-    optimizer.zero_grad()
+try:
+    for epoch in range(epochs):
+        optimizer.zero_grad()
 
-    # in case StopIteration error is raised
-    try:
-        batch_idx, (example_data, example_targets) = next(examples)
-    except StopIteration:
-        examples = enumerate(train_loader)
-        batch_idx, (example_data, example_targets) = next(examples)
+        # in case StopIteration error is raised
+        try:
+            batch_idx, (example_data, example_targets) = next(examples)
+        except StopIteration:
+            examples = enumerate(train_loader)
+            batch_idx, (example_data, example_targets) = next(examples)
 
-    # initialize state
-    state = init_state(batch_size_train, img_height, img_width, num_vectors, len_vectors)
+        # initialize state
+        state = init_state(batch_size_train, img_height, img_width, num_vectors, len_vectors)
 
-    # put current batches into state
-    state[:, :, :, 0, :] = data_to_state(example_data, batch_size_train)
-    state1 = torch.clone(state)
-    state2 = torch.clone(state)
-    state3 = torch.clone(state)
-    for step in range(steps):
+        # put current batches into state
+        state[:, :, :, 0, :] = data_to_state(example_data, batch_size_train)
+        state1 = torch.clone(state)
+        state2 = torch.clone(state)
+        state3 = torch.clone(state)
+        for step in range(steps):
 
-        delta = compute_all(bottom_up_model_list, top_down_model_list, layer_att_model_list, state, len_vectors,
-                            num_vectors, batch_size_train)
+            delta = compute_all(bottom_up_model_list, top_down_model_list, layer_att_model_list, state, len_vectors,
+                                num_vectors, batch_size_train)
 
-        state = state + delta + .0001 * torch.rand((state.shape)).to(device)
+            state = state + delta + .0001 * torch.rand((state.shape)).to(device)
 
-        # add first state to state in the middle of the steps (allows for RESNET type gradient backprop)
-        if (step % int(steps / 2) == 0):
-            state = state + state1 * .1
-            state1 = torch.clone(state)
+            # add first state to state in the middle of the steps (allows for RESNET type gradient backprop)
+            if (step % int(steps / 2) == 0):
+                state = state + state1 * .1
+                state1 = torch.clone(state)
 
-        if (step % int(steps / 4) == 0):
-            state = state + state2 * .1
-            state2 = torch.clone(state)
+            if (step % int(steps / 4) == 0):
+                state = state + state2 * .1
+                state2 = torch.clone(state)
 
-        if (step % int(steps / 8) == 0):
-            state = state + state3 * .1
-            state3 = torch.clone(state)
+            if (step % int(steps / 8) == 0):
+                state = state + state3 * .1
+                state3 = torch.clone(state)
 
-    state = state + state1 * .1 + state2 * .1 + state3 * .1
-    # get loss
-    pred_out = state[:, :, :, -1]
-    targ_out = targets_to_state(example_targets, batch_size_train)
-    loss = mse(pred_out, targ_out)
-    loss.backward()
-    optimizer.step()
-    train_loss.append(loss)
-    print("Epoch: {}/{}  Loss: {}".format(epoch, epochs, loss))
+        state = state + state1 * .1 + state2 * .1 + state3 * .1
+        # get loss
+        pred_out = state[:, :, :, -1]
+        targ_out = targets_to_state(example_targets, batch_size_train)
+        loss = mse(pred_out, targ_out)
+        loss.backward()
+        optimizer.step()
+        train_loss.append(loss)
+        print("Epoch: {}/{}  Loss: {}".format(epoch, epochs, loss))
 
-
-fig = plt.figure()
-plt.plot(xrange(len(train_loss)),train_loss, color='blue')
-plt.xlabel('number of training epochs')
-plt.ylabel('loss')
-plt.savefig("train.png")
+except:
+    print()
+    fig = plt.figure(train_loss)
+    plt.plot(xrange(len(train_loss)),train_loss, color='blue')
+    plt.xlabel('number of training epochs')
+    plt.ylabel('loss')
+    plt.savefig("train.png")
