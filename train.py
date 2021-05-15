@@ -12,8 +12,8 @@ device = torch.device(dev)
 
 import matplotlib.pyplot as plt
 
-batch_size_train = 60
-batch_size_test = 60
+batch_size_train = 25
+batch_size_test = 25
 learning_rate = 0.01
 log_interval = 10
 
@@ -216,9 +216,14 @@ try:
         optimizer.step()
         train_loss.append(loss)
         print("Epoch: {}/{}  Loss: {}".format(epoch, epochs, loss))
+        fig = plt.figure(train_loss)
+        plt.plot(xrange(len(train_loss)), train_loss, color='blue')
+        plt.xlabel('number of training epochs')
+        plt.ylabel('loss')
+        plt.savefig("train.png")
 
 except:
-    print()
+    print(train_loss))
     fig = plt.figure(train_loss)
     plt.plot(xrange(len(train_loss)),train_loss, color='blue')
     plt.xlabel('number of training epochs')
